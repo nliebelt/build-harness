@@ -1,7 +1,7 @@
 TMP ?= /tmp
 TERRAFORM ?= $(BUILD_HARNESS_PATH)/vendor/terraform
-TERRAFORM_VERSION ?= 0.11.11
-TERRAFORM_URL ?= https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(OS)_amd64.zip
+TERRAFORM_VERSION ?= 0.12.26
+TERRAFORM_URL ?= https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(OS)_$(BUILD_HARNESS_ARCH).zip
 
 ## Install terraform
 terraform/install:
@@ -32,9 +32,14 @@ endif
 
 ## Lint check Terraform
 terraform/lint:
+ifeq ($(OS), darwin)
+	@FAIL=`$(TERRAFORM) fmt -write=false | xargs -n 1 printf '\t- %s\n'`; \
+	[ -z "$$FAIL" ] || (echo "Terraform configuration needs linting. Run '$(TERRAFORM) fmt'"; echo $$FAIL; exit 1)
+else
 	@FAIL=`$(TERRAFORM) fmt -write=false | xargs --no-run-if-empty -n 1 printf '\t- %s\n'`; \
 	[ -z "$$FAIL" ] || (echo "Terraform configuration needs linting. Run '$(TERRAFORM) fmt'"; echo $$FAIL; exit 1)
+endif
 
 ## Upgrade all terraform module sources
-terraform/upgrade-modules: packages/install/json2hcl
+terraform/upgrade-modules:
 	@$(BUILD_HARNESS_PATH)/bin/upgrade_terraform_modules.sh all

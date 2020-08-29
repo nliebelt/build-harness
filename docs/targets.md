@@ -1,5 +1,6 @@
+<!-- markdownlint-disable -->
 ## Makefile Targets
-```
+```text
 Available targets:
 
   aws/install                         Install aws cli bundle
@@ -123,3 +124,4 @@ Available targets:
   travis/docker-tag-and-push          Tag & Push according Travis environment variables
 
 ```
+<!-- markdownlint-restore -->
