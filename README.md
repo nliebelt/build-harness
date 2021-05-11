@@ -1,4 +1,7 @@
+
+<!-- markdownlint-disable -->
 # Build Harness [![Build Status](https://github.com/cloudposse/build-harness/workflows/docker/badge.svg?branch=master)](https://github.com/cloudposse/build-harness/actions?query=workflow%3Adocker) [![Latest Release](https://img.shields.io/github/release/cloudposse/build-harness.svg)](https://github.com/cloudposse/build-harness/releases/latest) [![Slack Community](https://slack.cloudposse.com/badge.svg)](https://slack.cloudposse.com) [![Discourse Forum](https://img.shields.io/discourse/https/ask.sweetops.com/posts.svg)](https://ask.sweetops.com/)
+<!-- markdownlint-restore -->
 
 [![README Header][readme_header_img]][readme_header_link]
 
@@ -28,7 +31,6 @@
 This `build-harness` is a collection of Makefiles to facilitate building Golang projects, Dockerfiles, Helm charts, and more.
 It's designed to work with CI/CD systems such as GitHub Actions, Codefresh, Travis CI, CircleCI and Jenkins.
 
-
 ---
 
 This project is part of our comprehensive ["SweetOps"](https://cpco.io/sweetops) approach towards DevOps.
@@ -53,12 +55,14 @@ It's 100% Open Source and licensed under the [APACHE2](LICENSE).
 
 
 
-
 ## Screenshots
 
 
 ![demo](https://cdn.rawgit.com/cloudposse/build-harness/master/docs/demo.svg)
 *Example of using the `build-harness` to build a docker image*
+
+
+
 
 
 
@@ -129,6 +133,7 @@ Available targets:
   bash/lint                           Lint all bash scripts
   chamber/install                     Install chamber
   chamber/shell                       Start a chamber shell with secrets exported to the environment
+  clean                               Clean build-harness
   codefresh/export                    DEPRECATED!!! Export codefresh additional envvars
   codefresh/notify/slack/build        Send notification from codefresh to slack using "build" template
   codefresh/notify/slack/deploy       Send notification from codefresh to slack using "deploy" template
@@ -217,6 +222,7 @@ Available targets:
   help                                Help screen
   help/all                            Display help for all targets
   help/short                          This help short screen
+  init                                Init build-harness
   jenkins/run-job-with-tag            Run a Jenkins Job with $(TAG)
   make/lint                           Lint all makefiles
   packages/delete                     Delete packages
@@ -235,11 +241,14 @@ Available targets:
   slack/notify/deploy                 Send notification to slack using "deploy" template
   template/build                      Create $OUT file by building it from $IN template file
   template/deps                       Install dependencies
+  terraform/bump-tf-12-min-version    Rewrite versions.tf to bump modules with minimum core version of '0.12.x' to '>= 0.12.26'
   terraform/get-modules               Ensure all modules can be fetched
   terraform/get-plugins               Ensure all plugins can be fetched
   terraform/install                   Install terraform
   terraform/lint                      Lint check Terraform
-  terraform/upgrade-modules           Upgrade all terraform module sources
+  terraform/loosen-constraints        and convert "~>" constraints to ">=".
+  terraform/rewrite-required-providers Rewrite versions.tf to update existing configuration to add an explicit source attribute for each provider
+  terraform/upgrade-modules           This target has not been upgraded to handle registry format
   terraform/validate                  Basic terraform sanity check
   travis/docker-login                 Login into docker hub
   travis/docker-tag-and-push          Tag & Push according Travis environment variables
@@ -253,6 +262,48 @@ It is possible to extend the `build-harness` with targets and entire modules of 
 This might be useful if, for example, you wanted to maintain some tooling that was specific to your environment that didn't have enough general applicability to be part of the main project.
 This makes it so you don't necessarily need to fork `build-harness` itself - you can place a repo defined by the environment variable `BUILD_HARNESS_EXTENSIONS_PATH` (a filesystem peer of `build-harness` named `build-harness-extensions` by default) and populate it with tools in the same `Makefile` within `module` structure as `build-harness` has.
 Modules will be combined and available with a unified `make` command. 
+<!-- markdownlint-restore -->
+<!-- markdownlint-disable -->
+## Using the "auto-init" feature
+
+Typically, the `build-harness` project requires running `make init` before any of the Makefile targets can be invoked. The `init` target will "install" the `build-harness` project and "include" the `Makefile` from the `build-harness` project.
+
+Alternatively, the "auto-init" feature can automatically run the `init` logic for you to install the `build-harness` and help keep the install up-to-date. This feature is enabled using the env or Makefile variable `BUILD_HARNESS_AUTO_INIT=true`. By default, this feature is disabled; to enable it, you must set the variable yourself.
+
+**Note:** The "auto-init" feature is a convenience for running `make` interactively. Regardless of your setting of `BUILD_HARNESS_AUTO_INIT`, "auto-init" will be disabled if `make` is running inside a Docker container. Scripts and automation should continue to call `make init` explicitly. 
+
+```make
+BUILD_HARNESS_AUTO_INIT = true
+
+-include $(shell curl -sSL -o .build-harness "https://git.io/build-harness"; echo .build-harness)
+```
+
+The "auto-init" feature will _also_ keep the install up-to-date. It will check the value of `BUILD_HARNESS_BRANCH`, get the commit ID, compare that to the current checkout, and update the clone if they differ. A useful side-effect is that it becomes easy to pin to versions of the `build-harness` from your own project, and let the `build-harness` update itself as you update the pin:
+
+```make
+BUILD_HARNESS_AUTO_INIT = true
+BUILD_HARNESS_BRANCH = {TAG}
+
+-include $(shell curl -sSL -o .build-harness "https://git.io/build-harness"; echo .build-harness)
+```
+
+Now when you run `make` the project will update itself to use the version specified by the `BUILD_HARNESS_BRANCH` value:
+
+```sh
+$ make help
+Removing existing build-harness
+Cloning https://github.com/cloudposse/build-harness.git#{TAG}...
+Cloning into 'build-harness'...
+remote: Enumerating objects: 143, done.
+remote: Counting objects: 100% (143/143), done.
+remote: Compressing objects: 100% (118/118), done.
+remote: Total 143 (delta 7), reused 71 (delta 3), pack-reused 0
+Receiving objects: 100% (143/143), 85.57 KiB | 2.09 MiB/s, done.
+Resolving deltas: 100% (7/7), done.
+Available targets:
+
+  aws/install                         Install aws cli bundle
+```
 <!-- markdownlint-restore -->
 
 
@@ -353,7 +404,7 @@ In general, PRs are welcome. We follow the typical "fork-and-pull" Git workflow.
 
 ## Copyrights
 
-Copyright © 2016-2020 [Cloud Posse, LLC](https://cloudposse.com)
+Copyright © 2016-2021 [Cloud Posse, LLC](https://cloudposse.com)
 
 
 
@@ -412,8 +463,10 @@ Check out [our other projects][github], [follow us on twitter][twitter], [apply 
 
 ### Contributors
 
+<!-- markdownlint-disable -->
 |  [![Erik Osterman][osterman_avatar]][osterman_homepage]<br/>[Erik Osterman][osterman_homepage] | [![Igor Rodionov][goruha_avatar]][goruha_homepage]<br/>[Igor Rodionov][goruha_homepage] | [![Andriy Knysh][aknysh_avatar]][aknysh_homepage]<br/>[Andriy Knysh][aknysh_homepage] | [![Sarkis][sarkis_avatar]][sarkis_homepage]<br/>[Sarkis][sarkis_homepage] | [![Alexander Babai][alebabai_avatar]][alebabai_homepage]<br/>[Alexander Babai][alebabai_homepage] | [![Jon Boulle][jonboulle_avatar]][jonboulle_homepage]<br/>[Jon Boulle][jonboulle_homepage] | [![Marcin Brański][3h4x_avatar]][3h4x_homepage]<br/>[Marcin Brański][3h4x_homepage] |
 |---|---|---|---|---|---|---|
+<!-- markdownlint-restore -->
 
   [osterman_homepage]: https://github.com/osterman
   [osterman_avatar]: https://img.cloudposse.com/150x150/https://github.com/osterman.png
